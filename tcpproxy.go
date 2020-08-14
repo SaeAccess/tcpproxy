@@ -152,40 +152,6 @@ type fixedTarget struct {
 
 func (m fixedTarget) match(*bufio.Reader) (Target, string) { return m.t, "" }
 
-// AddressResolver defines the interface for resolving proxy target address
-type AddressResolver interface {
-	Resolve() (string, error)
-}
-
-type targetResolver struct {
-	t Target
-	r AddressResolver
-}
-
-func (tr targetResolver) match(*bufio.Reader) (Target, string) {
-	// resolve the proxy address
-	addr, err := tr.r.Resolve()
-	if err != nil {
-		// log
-		log.Printf("tcpproxy: could not resolve address for target %v", err)
-		return nil, ""
-	}
-
-	tr.t = &DialProxy{Addr: addr}
-	return tr.t, ""
-}
-
-// AddRouteResolver appends a targetResolver matching route to the ipPort listener,
-// directing any connection to dest.
-//
-// This is generally used as either the only rule (for simple TCP
-// proxies), or as the final fallback rule for an ipPort.
-//
-// The ipPort is any valid net.Listen TCP address.
-func (p *Proxy) AddRouteResolver(ipPort string, r AddressResolver) {
-	p.addRoute(ipPort, targetResolver{r: r})
-}
-
 // Run is calls Start, and then Wait.
 //
 // It blocks until there's an error. The return value is always
